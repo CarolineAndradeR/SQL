@@ -1,0 +1,44 @@
+SELECT jb2.werks,
+       jb.pstdat,
+       jb.docnum,
+       jb.nfenum,
+       jb2.matnr,
+       jb2.menge,
+       jb2.netwr,
+       K.kunnr,
+       P.kunn2
+FROM   (SELECT pstdat,
+               docnum,
+               nfenum,
+               cgc,
+               cpf,
+               direct,
+               nftot,
+               nftype,
+               cancel
+        FROM   j_1bnfdoc
+        WHERE  direct = '2'
+               AND nftype IN ( 'VE', 'VT' )) AS jb
+       INNER JOIN (SELECT docnum,
+                          docsta,
+                          scssta
+                   FROM   j_1bnfe_active
+                   WHERE  docsta = 1
+                          AND scssta <> '2') AS jba
+               ON jb.docnum = jba.docnum
+       INNER JOIN (SELECT werks,
+                          matnr,
+                          menge,
+                          netwr,
+                          netpr,
+                          docnum
+                   FROM   j_1bnflin) jb2
+               ON jb.docnum = jb2.docnum
+       INNER JOIN kna1 K
+               ON K.stcd1 = jb.cgc
+                   OR K.stcd2 = jb.cpf
+       LEFT JOIN (SELECT kunn2,
+                         kunnr
+                  FROM   knvp
+                  WHERE  parvw = 'ZV') P
+              ON K.kunnr = P.kunnr;
